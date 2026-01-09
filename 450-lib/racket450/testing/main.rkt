@@ -73,6 +73,11 @@
                                  (fail (exn-message e)))])
                            chk))) ...)]))
 
+;; format of a racket450/testing file
+;; (DECLARE-HW-FILE ...)
+;; (requires ...)
+;; (defines ...)
+;; (test-cases ...)
 (define-syntax testing-mb450
   (syntax-parser
     #:literals (DECLARE-HW-FILE)
@@ -80,6 +85,7 @@
               (~describe
                "HW DECLARATION FILE (should be 1st line after #lang)"
                ((~literal DECLARE-HW-FILE) _)))
+        (~and req ((~literal require) . _)) ...
         (~and def ((~literal define) . _)) ...
         tst ...)
      #:with (tst-case ...)
@@ -93,15 +99,15 @@
              #'(tst ...))
      #'(#%module-begin
         hw-decl
+        req ...
         def ...
         (define TESTS
           (test-suite
            (string-append (HW-FILE) " TESTS")
-           (test-begin
-             (test-case
-                 (string-append "Check that " (HW-FILE) " does not crash")
-               (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
-             tst-case ...)))
+           (test-case
+               (string-append "Check " (HW-FILE) " crashing (NO CREDIT IF NOT PASSING)")
+             (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
+           tst-case ...))
         (module+ main
           (require rackunit/text-ui)
           (run-tests TESTS 'verbose)))]))
