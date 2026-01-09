@@ -9,9 +9,7 @@
          DECLARE-HW-FILE
          test-case
          (rename-out [top450 #%top]
-                     [testing-mb450 #%module-begin])
-         #;(for-syntax
-          (all-from-out racket/base)))
+                     [testing-mb450 #%module-begin]))
 
 (require rackunit
          rackunit/text-ui
@@ -59,9 +57,6 @@
 (define-syntax (test-case stx)
   (syntax-parse stx
     [(_ nam chk ...)
-     ;; #:with _p (format-id #'nam "p")
-     ;; #:with _p/lst (format-id #'nam "p/lst")
-     ;; #:with _mk-racket-variable-name (format-id #'nam "mk-racket-variable-name")
      #'(ru:test-case nam
                      (with-check-info*
                          (list
@@ -76,12 +71,7 @@
                               [exn:fail:contract?
                                (lambda (e)
                                  (fail (exn-message e)))])
-                           chk
-                           #;(let ([_p (HW p)]
-                                 [_p/lst (HW p/lst)]
-                                 [_mk-racket-variable-name (HW mk-racket-variable-name)])
-                             chk)
-                           ))) ...)]))
+                           chk))) ...)]))
 
 (define-syntax testing-mb450
   (syntax-parser
@@ -92,16 +82,12 @@
                ((~literal DECLARE-HW-FILE) _)))
         (~and def ((~literal define) . _)) ...
         tst ...)
-;    #:do[(displayln #'(def ...))
-     ;         (displayln #'(tst ...))]
      #:with (tst-case ...)
             (stx-map
              (syntax-parser
                [((~literal test-case) . _)
-;                #:do[(printf "already have test case: ~a\n" (syntax->datum this-syntax))]
                 this-syntax]
                [this-tst
-;                #:do[(printf "NO test case: ~a\n" (syntax->datum #'this-tst))]
                 (syntax/loc this-syntax
                   (test-case (~a 'this-tst) this-tst))])
              #'(tst ...))
@@ -111,7 +97,6 @@
         (define TESTS
           (test-suite
            (string-append (HW-FILE) " TESTS")
-           ;           (test-case (~a 'ru-tst) ru-tst) ...))
            tst-case ...))
         (module+ main
           (require rackunit/text-ui)
