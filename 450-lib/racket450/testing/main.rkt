@@ -107,7 +107,7 @@
           (test-suite
            (string-append (HW-FILE) " TESTS")
            (test-case
-               (string-append (HW-FILE) " CRASH CHECK (FAIL = NO CREDIT)")
+               (string-append "!CRASH CHECK: " (HW-FILE) " (NOT PASSING = NO CREDIT)")
              (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
            tst-case ...))
         (module+ main
