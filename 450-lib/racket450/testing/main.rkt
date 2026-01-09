@@ -18,6 +18,7 @@
          racket450
          racket/format
          (for-syntax racket/base
+                     syntax/stx
                      syntax/parse
                      racket/syntax))
 
@@ -65,7 +66,7 @@
                      (with-check-info*
                          (list
 ;                          (make-check-location (list (HW-FILE) #f #f #f #f))
-;                          (make-check-name nam)
+                          (make-check-name nam)
                           (make-check-expression 'chk))
                        (lambda ()
                          (with-handlers
@@ -90,16 +91,28 @@
                "HW DECLARATION FILE (should be 1st line after #lang)"
                ((~literal DECLARE-HW-FILE) _)))
         (~and def ((~literal define) . _)) ...
-        ru-tst ...)
+        tst ...)
 ;    #:do[(displayln #'(def ...))
-;         (displayln #'(tst ...))]
+     ;         (displayln #'(tst ...))]
+     #:with (tst-case ...)
+            (stx-map
+             (syntax-parser
+               [((~literal test-case) . _)
+;                #:do[(printf "already have test case: ~a\n" (syntax->datum this-syntax))]
+                this-syntax]
+               [this-tst
+;                #:do[(printf "NO test case: ~a\n" (syntax->datum #'this-tst))]
+                (syntax/loc this-syntax
+                  (test-case (~a 'this-tst) this-tst))])
+             #'(tst ...))
      #'(#%module-begin
         hw-decl
         def ...
         (define TESTS
           (test-suite
            (string-append (HW-FILE) " TESTS")
-           (test-case (~a 'ru-tst) ru-tst) ...))
+           ;           (test-case (~a 'ru-tst) ru-tst) ...))
+           tst-case ...))
         (module+ main
           (require rackunit/text-ui)
           (run-tests TESTS 'verbose)))]))
