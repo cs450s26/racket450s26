@@ -82,19 +82,6 @@
                              chk)
                            ))) ...)]))
 
-(define-syntax innner-testing-mb450
-  (syntax-parser
-    [(_ skip-hw-decl (~and d ((~datum define) . _)) ... t ...)
-     #:do[(displayln #'(d ...))
-          (displayln #'(t ...))]
-     #'(#%module-begin
-        d ...
-        (define TESTS
-          (test-suite
-           (HW-FILE)
-           (test-case (~a 't) t) ...))
-        (run-tests TESTS 'verbose))]))
-
 (define-syntax testing-mb450
   (syntax-parser
     #:literals (DECLARE-HW-FILE)
