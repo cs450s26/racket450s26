@@ -87,6 +87,7 @@
                ((~literal DECLARE-HW-FILE) _)))
         (~and req ((~literal require) . _)) ...
         (~and def ((~literal define) . _)) ...
+        (~and def-stx ((~literal define-syntax) . _)) ...
         tst ...)
      #:with (tst-case ...)
             (stx-map
@@ -101,11 +102,12 @@
         hw-decl
         req ...
         def ...
+        def-stx ...
         (define TESTS
           (test-suite
            (string-append (HW-FILE) " TESTS")
            (test-case
-               (string-append "Check " (HW-FILE) " crashing (NO CREDIT IF NOT PASSING)")
+               (string-append (HW-FILE) " CRASH CHECK (FAIL = NO CREDIT)")
              (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
            tst-case ...))
         (module+ main
