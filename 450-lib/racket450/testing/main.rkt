@@ -97,7 +97,11 @@
         (define TESTS
           (test-suite
            (string-append (HW-FILE) " TESTS")
-           tst-case ...))
+           (test-begin
+             (test-case
+                 (string-append "Check that " (HW-FILE) " does not crash")
+               (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
+             tst-case ...)))
         (module+ main
           (require rackunit/text-ui)
           (run-tests TESTS 'verbose)))]))
