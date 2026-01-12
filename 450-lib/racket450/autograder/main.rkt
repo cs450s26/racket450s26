@@ -113,7 +113,7 @@
            (test-case
             (string-append "!CRASH CHECK: "
                            (HW-FILE)
-                           " (NOT PASSING = NO CREDIT)")
+                           " (MUST PASS OR NO HW CREDIT)")
             (check-not-exn
              (lambda ()
                (dynamic-require
@@ -127,7 +127,7 @@
            (test-case
             (string-append "!TEST FILE CRASH CHECK: "
                            (TEST-FILE)
-                           " (NOT PASSING = NO CREDIT)")
+                           " (MUST PASS OR NO HW CREDIT)")
             (check-not-exn
              (lambda ()
                (dynamic-require
@@ -138,14 +138,38 @@
                    (exn:fail:contract:dynamic-require
                     (format "test file ~a crashed" (TEST-FILE))
                     (current-continuation-marks))))))))
-           #;(test-suite
-               (string-append "!TESTS CHECK: " (TEST-FILE) " (NOT PASSING = NO CREDIT)")
-             (dynamic-require
-              (TEST-FILE)
-              #;(string-append
-               (path->string (path-replace-extension (HW-FILE) #""))
-               "-tests.rkt")
-              'TESTS))
+           (test-case
+            (string-append "!CHECK TEST SUITE DEFINED in: "
+                           (TEST-FILE)
+                           " (MUST PASS OR NO HW CREDIT)")
+            (check-true
+             (test-suite?
+              (dynamic-require
+               (TEST-FILE)
+               'TESTS
+               (lambda ()
+                 (raise
+                  (exn:fail:contract:dynamic-require
+                   (format "TESTS test-suite not defined, using #lang racket450/testing?")
+                   (current-continuation-marks))))))))
+
+           (test-case
+            (string-append "!CHECK ALL TESTS PASSING in: "
+                           (TEST-FILE)
+                           " (MUST PASS OR NO HW CREDIT)")
+            (check-true
+             (andmap
+              test-success?
+              (run-test
+               (dynamic-require
+                (TEST-FILE)
+                'TESTS
+                (lambda ()
+                  (raise
+                   (exn:fail:contract:dynamic-require
+                    (format "TESTS test-suite not defined, using #lang racket450/testing?")
+                    (current-continuation-marks)))))))))
+
            tst-case ...))
         (module+ main
           (require rackunit/text-ui)
