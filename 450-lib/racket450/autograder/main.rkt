@@ -6,7 +6,7 @@
            racket450)
           #%top
           #%module-begin)
-         DECLARE-HW-FILE
+         DECLARE-HW-NUM
          test-case
          (rename-out [top450 #%top]
                      [testing-mb450 #%module-begin]))
@@ -25,15 +25,20 @@
 
 (struct exn:fail:contract:dynamic-require exn:fail:contract ())
 
-(define HW-FILE
+(define HW-NUM
   (make-parameter #f)
   #;(lambda ()
      (raise
       (exn:fail:contract
        "HW file not declared (are you using #lang racket/testing ?)"))))
 
-(define-syntax DECLARE-HW-FILE
-  (syntax-parser [(_ f) #'(HW-FILE f)]))
+(define-syntax DECLARE-HW-NUM
+  (syntax-parser [(_ f) #'(HW-NUM f)]))
+
+(define (HW-FILE)
+  (format "hw~a.rkt" (HW-NUM)))
+(define (TEST-FILE)
+  (format "hw~a-tests.rkt" (HW-NUM)))
 
 (define-syntax (HW stx)
   (syntax-parse stx
@@ -80,11 +85,10 @@
 ;; (test-cases ...)
 (define-syntax testing-mb450
   (syntax-parser
-    #:literals (DECLARE-HW-FILE)
     [(_ (~and hw-decl
               (~describe
-               "HW DECLARATION FILE (should be 1st line after #lang)"
-               ((~literal DECLARE-HW-FILE) _)))
+               "HW NUM DECLARATION  (should be 1st line after #lang)"
+               ((~literal DECLARE-HW-NUM) _)))
         (~and req ((~literal require) . _)) ...
         (~and def ((~literal define) . _)) ...
         (~and def-stx ((~literal define-syntax) . _)) ...
@@ -107,20 +111,26 @@
           (test-suite
            (string-append (HW-FILE) " TESTING")
            (test-case
-               (string-append "!CRASH CHECK: " (HW-FILE) " (NOT PASSING = NO CREDIT)")
-             (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
-           #;(test-case
-               (string-append "!TESTS FILE CHECK: " (HW-FILE) "-tests.rkt (NOT PASSING = NO CREDIT)")
-             (check-not-exn
-              (lambda ()
-                (dynamic-require
-                 (string-append
-                  (path->string (path-replace-extension (HW-FILE) #""))
-                  "-tests.rkt") #f))))
-           #;(test-suite
-               (string-append "!TESTS CHECK: " (HW-FILE) "-tests.rkt (NOT PASSING = NO CREDIT)")
+            (string-append "!CRASH CHECK: "
+                           (HW-FILE)
+                           " (NOT PASSING = NO CREDIT)")
+            (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
+           (test-case
+               (string-append "!TEST FILE CRASH CHECK: "
+                              (TEST-FILE)
+                              " (NOT PASSING = NO CREDIT)")
+               (check-not-exn
+                (lambda ()
+                  (dynamic-require
+                   (TEST-FILE)
+                   #;(string-append
+                    (path->string (path-replace-extension (TEST-FILE) #""))
+                    "-tests.rkt") #f))))
+           (test-suite
+               (string-append "!TESTS CHECK: " (TEST-FILE) " (NOT PASSING = NO CREDIT)")
              (dynamic-require
-              (string-append
+              (TEST-FILE)
+              #;(string-append
                (path->string (path-replace-extension (HW-FILE) #""))
                "-tests.rkt")
               'TESTS))

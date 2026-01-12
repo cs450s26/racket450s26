@@ -4,11 +4,11 @@
           (all-from-out
            rackunit
            racket450)
-          #%top
+          #;#%top
           #%module-begin)
-         DECLARE-HW-FILE
+         #;DECLARE-HW-FILE
          test-case
-         (rename-out [top450 #%top]
+         (rename-out #;[top450 #%top]
                      [testing-mb450 #%module-begin]))
 
 (require rackunit
@@ -80,15 +80,24 @@
 ;; (test-cases ...)
 (define-syntax testing-mb450
   (syntax-parser
-    #:literals (DECLARE-HW-FILE)
-    [(_ (~and hw-decl
+    [(_ #;(~and hw-decl
               (~describe
                "HW DECLARATION FILE (should be 1st line after #lang)"
                ((~literal DECLARE-HW-FILE) _)))
         (~and req ((~literal require) . _)) ...
         (~and def ((~literal define) . _)) ...
-        (~and def-stx ((~literal define-syntax) . _)) ...
-        tst ...)
+        ;(~and def-stx ((~literal define-syntax) . _)) ...
+        tst
+        #;(~and tst
+              (~describe
+               "test case (requires and defines must come before first test case)"
+               ((~or (~literal check-equal?)
+                     (~literal check-true)
+                     (~literal check-false)
+                     (~literal check-not-false)
+                     (~literal check-within)
+                     (~literal let))
+               . _))) ...)
      #:with (tst-case ...)
             (stx-map
              (syntax-parser
@@ -99,14 +108,14 @@
                   (test-case (~a 'this-tst) this-tst))])
              #'(tst ...))
      #'(#%module-begin
-        hw-decl
+       ; hw-decl
         req ...
         def ...
-        def-stx ...
+        ;def-stx ...
         (define TESTS
           (test-suite
-           (string-append (HW-FILE) " TESTING")
-           (test-case
+           (string-append "HW TEST SUITE")
+           #;(test-case
                (string-append "!CRASH CHECK: " (HW-FILE) " (NOT PASSING = NO CREDIT)")
              (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
            #;(test-case
@@ -124,7 +133,7 @@
                (path->string (path-replace-extension (HW-FILE) #""))
                "-tests.rkt")
               'TESTS))
-           tst-case ...))
+           (let () tst ...)))
         (module+ main
           (require rackunit/text-ui)
           (run-tests TESTS 'verbose)))]))
