@@ -114,8 +114,16 @@
             (string-append "!CRASH CHECK: "
                            (HW-FILE)
                            " (NOT PASSING = NO CREDIT)")
-            (check-not-exn (lambda () (dynamic-require (HW-FILE) #f))))
-           (test-case
+            (check-not-exn
+             (lambda ()
+               (dynamic-require
+                (HW-FILE)
+                (lambda ()
+                  (raise
+                   (exn:fail:contract:dynamic-require
+                    (format "hw file ~a crashed" (HW-FILE))
+                    (current-continuation-marks))))))))
+           #;(test-case
                (string-append "!TEST FILE CRASH CHECK: "
                               (TEST-FILE)
                               " (NOT PASSING = NO CREDIT)")
@@ -126,7 +134,7 @@
                    #;(string-append
                     (path->string (path-replace-extension (TEST-FILE) #""))
                     "-tests.rkt") #f))))
-           (test-suite
+           #;(test-suite
                (string-append "!TESTS CHECK: " (TEST-FILE) " (NOT PASSING = NO CREDIT)")
              (dynamic-require
               (TEST-FILE)
