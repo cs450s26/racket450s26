@@ -2,28 +2,37 @@
 
 (provide (except-out
           (all-from-out racket/base
+                        racket/bool
                         racket/list
                         racket/math
+                        racket/match
+                        racket/format
                         racket/string
                         racket/contract
+                        racket/function
                         rackunit
                         2htdp/image
                         2htdp/universe)
+          ;; excluded names:
           #%module-begin
           set!
           define-values
           values
 ;          match-define
 ;          match-let
-          let*
+;          let*
           letrec)
          (rename-out
           [mb450 #%module-begin]))
 
-(require racket/list
+(require racket/bool
+         racket/list         
          racket/math
+         racket/match
+         racket/format
          racket/string
          racket/contract
+         racket/function
          rackunit
          2htdp/image
          2htdp/universe

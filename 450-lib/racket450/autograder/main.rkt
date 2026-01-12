@@ -25,17 +25,17 @@
 
 (struct exn:fail:contract:dynamic-require exn:fail:contract ())
 
-#;(define HW-FILE
+(define HW-FILE
   (make-parameter #f)
   #;(lambda ()
      (raise
       (exn:fail:contract
        "HW file not declared (are you using #lang racket/testing ?)"))))
 
-#;(define-syntax DECLARE-HW-FILE
+(define-syntax DECLARE-HW-FILE
   (syntax-parser [(_ f) #'(HW-FILE f)]))
 
-#;(define-syntax (HW stx)
+(define-syntax (HW stx)
   (syntax-parse stx
     [(_ symb)
      #'(dynamic-require
@@ -48,13 +48,13 @@
              "attempted to use an identifier that was not defined: ~a" 'symb)
             (current-continuation-marks)))))]))
 
-#;(define-syntax (top450 stx)
+(define-syntax (top450 stx)
   (syntax-parse stx
     [(_ . p)
 ;     #:do[(displayln (syntax->datum #'p))]
      #'(HW p)]))
 
-#;(define-syntax (test-case stx)
+(define-syntax (test-case stx)
   (syntax-parse stx
     [(_ nam chk ...)
      #'(ru:test-case nam
@@ -118,7 +118,7 @@
                   (path->string (path-replace-extension (HW-FILE) #""))
                   "-tests.rkt") #f))))
            #;(test-suite
-            (string-append "!TESTS CHECK: " (HW-FILE) "-tests.rkt (NOT PASSING = NO CREDIT)")
+               (string-append "!TESTS CHECK: " (HW-FILE) "-tests.rkt (NOT PASSING = NO CREDIT)")
              (dynamic-require
               (string-append
                (path->string (path-replace-extension (HW-FILE) #""))
