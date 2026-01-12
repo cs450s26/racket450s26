@@ -124,7 +124,7 @@
                    (exn:fail:contract:dynamic-require
                     (format "hw file ~a crashed" (HW-FILE))
                     (current-continuation-marks))))))))
-           #;(test-case
+           (test-case
             (string-append "!TEST FILE CRASH CHECK: "
                            (TEST-FILE)
                            " (NOT PASSING = NO CREDIT)")
