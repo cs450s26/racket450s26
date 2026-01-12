@@ -118,22 +118,26 @@
              (lambda ()
                (dynamic-require
                 (HW-FILE)
+                #f
                 (lambda ()
                   (raise
                    (exn:fail:contract:dynamic-require
                     (format "hw file ~a crashed" (HW-FILE))
                     (current-continuation-marks))))))))
            #;(test-case
-               (string-append "!TEST FILE CRASH CHECK: "
-                              (TEST-FILE)
-                              " (NOT PASSING = NO CREDIT)")
-               (check-not-exn
+            (string-append "!TEST FILE CRASH CHECK: "
+                           (TEST-FILE)
+                           " (NOT PASSING = NO CREDIT)")
+            (check-not-exn
+             (lambda ()
+               (dynamic-require
+                (TEST-FILE)
+                #f
                 (lambda ()
-                  (dynamic-require
-                   (TEST-FILE)
-                   #;(string-append
-                    (path->string (path-replace-extension (TEST-FILE) #""))
-                    "-tests.rkt") #f))))
+                  (raise
+                   (exn:fail:contract:dynamic-require
+                    (format "test file ~a crashed" (TEST-FILE))
+                    (current-continuation-marks))))))))
            #;(test-suite
                (string-append "!TESTS CHECK: " (TEST-FILE) " (NOT PASSING = NO CREDIT)")
              (dynamic-require
