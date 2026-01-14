@@ -78,21 +78,25 @@
                                  (fail (exn-message e)))])
                            chk))) ...)]))
 
-;; format of a racket450/testing file
-;; (DECLARE-HW-FILE ...)
+;; format of a #lang racket450/autograder file (in any order)
+;; (DECLARE-HW-NUM ...)
 ;; (requires ...)
 ;; (defines ...)
 ;; (test-cases ...)
 (define-syntax testing-mb450
   (syntax-parser
-    [(_ (~and hw-decl
-              (~describe
-               "HW NUM DECLARATION  (should be 1st line after #lang)"
-               ((~literal DECLARE-HW-NUM) _)))
-        (~and req ((~literal require) . _)) ...
-        (~and def ((~literal define) . _)) ...
-        (~and def-stx ((~literal define-syntax) . _)) ...
-        tst ...)
+    [(_ (~alt (~once
+               (~describe #:role "DECLARE-HW-NUM" "hw num"
+                          (~and hw-decl
+                                ((~literal DECLARE-HW-NUM) _)))
+               #:too-few
+               "#lang racket450/autograder file missing DECLARE-HW-NUM")
+              (~and req ((~literal require) . _))
+              (~and def ((~literal define) . _))
+              (~and def-stx ((~literal define-syntax) . _))
+             tst) ...
+        ;tst ...)
+        )
      #:with (tst-case ...)
             (stx-map
              (syntax-parser
