@@ -133,7 +133,7 @@
                (path->string (path-replace-extension (HW-FILE) #""))
                "-tests.rkt")
               'TESTS))
-           (let () tst ...)))
+           (let () tst ... (void))))
         (module+ main
           (require rackunit/text-ui)
           (run-tests TESTS 'verbose)))]))

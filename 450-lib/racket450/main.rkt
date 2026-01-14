@@ -10,9 +10,9 @@
                         racket/string
                         racket/contract
                         racket/function
-                        rackunit
-                        2htdp/image
-                        2htdp/universe)
+                        rackunit)
+                        ;; 2htdp/image
+                        ;; 2htdp/universe)
           ;; excluded names:
           #%module-begin
           set!
@@ -34,8 +34,8 @@
          racket/contract
          racket/function
          rackunit
-         2htdp/image
-         2htdp/universe
+         ;; 2htdp/image
+         ;; 2htdp/universe
          (for-syntax racket/base
                      syntax/parse
                      racket/syntax))
