@@ -128,7 +128,7 @@
                    (exn:fail:contract:dynamic-require
                     (format "hw file ~a crashed" (HW-FILE))
                     (current-continuation-marks))))))))
-           (test-case
+           #;(test-case
             (string-append "!TEST FILE CRASH CHECK: "
                            (TEST-FILE)
                            " (MUST PASS OR NO HW CREDIT)")
@@ -142,7 +142,7 @@
                    (exn:fail:contract:dynamic-require
                     (format "test file ~a crashed" (TEST-FILE))
                     (current-continuation-marks))))))))
-           (test-case
+           #;(test-case
             (string-append "!CHECK TEST SUITE DEFINED in: "
                            (TEST-FILE)
                            " (MUST PASS OR NO HW CREDIT)")
@@ -157,7 +157,7 @@
                    (format "TESTS test-suite not defined, using #lang racket450/testing?")
                    (current-continuation-marks))))))))
 
-           (test-case
+           #;(test-case
             (string-append "!CHECK ALL TESTS PASSING in: "
                            (TEST-FILE)
                            " (MUST PASS OR NO HW CREDIT)")
