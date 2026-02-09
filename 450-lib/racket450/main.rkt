@@ -42,16 +42,71 @@
          ;; 2htdp/image
          ;; 2htdp/universe
          (for-syntax racket/base
+                     syntax/stx
                      syntax/parse
                      racket/syntax))
 
+(begin-for-syntax
+  (define test-form?
+    (syntax-parser
+      [((~or (~literal test-case)
+             (~literal check-equal?)
+             (~literal check-within)
+             (~literal check-true)
+             (~literal check-false)
+             (~literal check-not-false)
+             (~literal check-exn))
+        . _)
+       #t]
+      [_ #f]))
+  
+  (define maybe-wrap-test-form
+    (syntax-parser
+      [((~literal test-case) . _) this-syntax]
+      [(~and ((~or (~literal check-equal?)
+                   (~literal check-within)
+                   (~literal check-true)
+                   (~literal check-false)
+                   (~literal check-not-false)
+                   (~literal check-exn))
+              . _)
+             this-tst)
+       (syntax/loc this-syntax
+         (test-case (~a 'this-tst) this-tst))]
+      ))
+  )
+
 (define-syntax mb450
   (syntax-parser
-    [(_ x ...)
+    [(_ forms ...)
+
+     #:with (non-test-forms ...)
+     (filter
+      (compose not test-form?)
+      (stx->list #'(forms ...)))
+
+     #:with (test-forms ...)
+     (filter
+      test-form?
+      (stx->list #'(forms ...)))
+
+     #:with (wrapped-test-forms ...)
+     (stx-map
+      maybe-wrap-test-form
+      #'(test-forms ...))
+
      #:with do-provide-all (datum->syntax this-syntax '(provide (all-defined-out)))
+
      #'(#%module-begin
         do-provide-all
-        x ...)]))
+        non-test-forms ...
+        (define HW-EXAMPLES
+          (test-suite
+           (string-append "HW Examples, run as extra Tests")
+           (let () wrapped-test-forms ... (void))))
+        (module+ main
+          (require rackunit/text-ui)
+          (run-tests HW-EXAMPLES 'verbose)))]))
 
 ;; override htdp forms with stxerr
 (define-syntax define-struct
