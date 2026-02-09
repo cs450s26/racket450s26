@@ -11,8 +11,6 @@
                         racket/contract
                         racket/function
                         rackunit)
-                        ;; 2htdp/image
-                        ;; 2htdp/universe)
           ;; excluded names:
           #%module-begin
           set!
@@ -39,8 +37,6 @@
          racket/contract
          racket/function
          rackunit
-         ;; 2htdp/image
-         ;; 2htdp/universe
          (for-syntax racket/base
                      syntax/stx
                      syntax/parse
@@ -100,15 +96,16 @@
      #'(#%module-begin
         do-provide-all
         non-test-forms ...
-        (define HW-EXAMPLES
+        test-forms ...
+        #;(define HW-EXAMPLES
           (test-suite
            (string-append "HW Examples, run as extra Tests")
            (let () wrapped-test-forms ... (void))))
-        (module+ main
+        #;(module+ main
           (require rackunit/text-ui)
           (run-tests HW-EXAMPLES 'verbose)))]))
 
-;; override htdp forms with stxerr
+;; override htdp forms with syntax error
 (define-syntax define-struct
   (syntax-parser
     [(_ . _)
