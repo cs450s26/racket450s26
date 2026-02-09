@@ -54,7 +54,6 @@
         x ...)]))
 
 ;; override htdp forms with stxerr
-
 (define-syntax define-struct
   (syntax-parser
     [(_ . _)

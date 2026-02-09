@@ -78,7 +78,94 @@
 ;; (requires ...)
 ;; (defines ...)
 ;; (test-cases ...)
+
+(begin-for-syntax
+  (define test-form?
+    (syntax-parser
+      [((~or (~literal test-case)
+             (~literal check-equal?)
+             (~literal check-within)
+             (~literal check-true)
+             (~literal check-false)
+             (~literal check-not-false)
+             (~literal check-exn))
+        . _)
+       #t]
+      [_ #f]))
+  
+  (define maybe-wrap-test-form
+    (syntax-parser
+      [((~literal test-case) . _) this-syntax]
+      [(~and ((~or (~literal check-equal?)
+                   (~literal check-within)
+                   (~literal check-true)
+                   (~literal check-false)
+                   (~literal check-not-false)
+                   (~literal check-exn))
+              . _)
+             this-tst)
+       (syntax/loc this-syntax
+         (test-case (~a 'this-tst) this-tst))]
+      ))
+  )
+
 (define-syntax testing-mb450
+  (syntax-parser
+    [(_ (~and #;(~seq (~or ((~literal require) . _)
+                         ((~literal define) . _)
+                         ((~literal define-syntax) . _)
+                         ((~literal let) . _)
+                         ((~literal test-case) . _)
+                         ((~literal check-equal?) . _)
+                         ((~literal check-within) . _)
+                         ) ...)
+              (~seq forms ...)))
+     #:with (non-test-forms ...)
+     (filter
+      (compose not test-form?)
+      #;(syntax-parser
+        [((~literal test-case) . _) #f]
+        [((~literal check-equal?) . _) #f]
+        [_ #t])
+      (stx->list #'(forms ...)))
+
+     #:with (test-forms ...)
+     (filter
+      test-form?
+      #;(syntax-parser
+        [((~literal test-case) . _) #t]
+        [((~literal check-equal?) . _) #t]
+        [_ #f])
+      (stx->list #'(forms ...)))
+;     #:do[(displayln #'(forms ...))]
+;     #:do[(displayln #'(non-test-forms ...))]
+;     #:do[(displayln #'(test-forms ...))]
+
+     #:with (wrapped-test-forms ...)
+     (stx-map
+      maybe-wrap-test-form
+      #;(syntax-parser
+        [((~literal test-case) . _) this-syntax]
+        [(~and ((~literal check-equal?) . _)
+               this-tst)
+         (syntax/loc this-syntax
+           (test-case (~a 'this-tst) this-tst))])
+      #'(test-forms ...))
+
+;     #:do[(displayln #'(wrapped-test-forms ...))]
+
+     
+     #'(#%module-begin
+        non-test-forms ...
+        (define TESTS
+          (test-suite
+           (string-append "HW TEST SUITE")
+           (let () wrapped-test-forms ... (void))))
+        (module+ main
+          (require rackunit/text-ui)
+          (run-tests TESTS 'verbose)))]))
+
+#;(define-syntax testing-mb450
   (syntax-parser
     [(_ #;(~and hw-decl
               (~describe
