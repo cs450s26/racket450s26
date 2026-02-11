@@ -22,20 +22,20 @@
            (~literal check-exn))
       . _)
      #t]
+    [((~or (~literal let)
+           (~literal let*)
+           (~literal letrec))
+      let-bindings
+      maybe-tst)
+     (test-form? #'maybe-tst)]
     [_ #f]))
   
 (define maybe-wrap-test-form
   (syntax-parser
     [((~literal test-case) . _) this-syntax]
-    [(~and ((~or (~literal check-equal?)
-                 (~literal check-within)
-                 (~literal check-true)
-                 (~literal check-false)
-                 (~literal check-not-false)
-                 (~literal check-exn))
-            . _)
-           this-tst)
+    [maybe-tst
+     #:when (test-form? #'maybe-tst)
      (syntax/loc this-syntax
-       (test-case (~a 'this-tst) this-tst))]))
+       (test-case (~a 'maybe-tst) maybe-tst))]))
 
 
