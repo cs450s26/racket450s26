@@ -38,7 +38,7 @@
          racket/contract
          racket/function
          rackunit
-         (only-in lang/htdp-advanced ....)
+         (only-in lang/htdp-advanced .. ....)
          (for-syntax "450-stx-utils.rkt"
                      racket/base
                      syntax/stx
