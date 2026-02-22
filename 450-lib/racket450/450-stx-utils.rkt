@@ -24,8 +24,10 @@
      #t]
     [((~or (~literal let)
            (~literal let*)
-           (~literal letrec))
-      let-bindings
+           (~literal letrec)
+           (~literal for)
+           (~literal for*))
+      bindings
       maybe-tst)
      (test-form? #'maybe-tst)]
     [_ #f]))
