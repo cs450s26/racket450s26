@@ -19,6 +19,7 @@
            (~literal check-true)
            (~literal check-false)
            (~literal check-not-false)
+           (~literal check-not-equal?)
            (~literal check-exn))
       . _)
      #t]
@@ -28,8 +29,8 @@
            (~literal for)
            (~literal for*))
       bindings
-      maybe-tst)
-     (test-form? #'maybe-tst)]
+      . maybe-tsts)
+     (andmap test-form? (syntax->list #'maybe-tsts))]
     [_ #f]))
   
 (define maybe-wrap-test-form
