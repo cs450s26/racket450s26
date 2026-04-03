@@ -93,7 +93,8 @@
                "#lang racket450/autograder file missing DECLARE-HW-NUM")
               (~and req ((~literal require) . _))
               (~and def ((~or (~literal define)
-                              (~literal define/contract)). _))
+                              (~literal define/contract)
+                              (~literal struct)) . _))
               (~and def-stx ((~literal define-syntax) . _))
              tst) ...
         ;tst ...)
