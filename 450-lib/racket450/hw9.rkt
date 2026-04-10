@@ -1,12 +1,14 @@
 #lang racket
 
 (provide hw9-slice
-         hw9-ref
-         (rename-out [mk-array+ hw9-mk-array+]
-                     [exn:fail:cs450:broadcast?
-                      hw9-exn:fail:cs450:broadcast?]))
+         (rename-out
+          [mk-Slice/testing hw9-mk-Slice]
+          [Slice? hw9-Slice?]
+          [mk-array+ hw9-mk-array+]
+          [exn:fail:cs450:broadcast?
+           hw9-exn:fail:cs450:broadcast?]))
 
-;; An Index is
+;; An Index is one of:
 ;; - nonneg int
 ;; - neg int
 ;; Represents:
@@ -52,6 +54,18 @@
 
 ;; A Dim is an exact-nonnegative-int
 (define (Dim? x) (exact-nonnegative-integer? x))
+
+;; Array -> exact-nonneg-int
+(define (ndim a)
+  (cond
+    [(Atom? a) 0]
+    [else (ndim-alst a)]))
+
+;; arraylist -> exact nonneg int
+(define (ndim-alst a)
+  (cond
+    [(empty? a) 1]
+    [else (+ 1 (ndim (first a)))]))
 
 (define/contract (shape a)
   (-> Array? (listof Dim?))
@@ -136,10 +150,6 @@
                        (rest-unless-len1compat a2 a1)
                         #:array-elt+ array-elt+))]))
 
-(define/contract (hw9-ref a i)
-  (-> Array? Index? Array?)
-  (ref/flat a i))
-
 (define/contract (ref/flat a . indices)
   (->* (Array?) () #:rest (listof Index?) Array?)
   (cond
@@ -158,10 +168,56 @@
     [(exact-nonnegative-integer? i) i]
     [(negative? i) (+ n i)]))
 
-;; stop is exclusive
-(define/contract (hw9-slice a start stop step)
-  (-> ArrayList? Index? Index? Step? ArrayList?)
-  (get-slice a start stop #:step step))
+;; a Slice is a
+;; index
+;; (mk-Slice start MaybeStop step)
+;; - start and stop can be neg, step cannot
+;; - start is inclusive, stop is exclusive
+;; Represents: Slice range
+(define (Slice? x)
+  (or (Index? x) (SliceRange? x)))
+
+;; A MaybeStop is either #f or an Index (exclusive)
+(define (MaybeStop? x) (or (false? x) (Index? x)))
+
+(struct SliceRange [i j step] #:transparent)
+;; careful! stop is exclusive, so = -1 is not the same as #f
+(define/contract (mk-Slice i [j #f] #:step [step 1])
+  (->* (Index?) (MaybeStop? #:step Step?) Slice?)
+  (SliceRange i j step))
+
+(define/contract (mk-Slice/testing #:start [start 0]
+                                   #:stop [stop #f]
+                                   #:step [step 1])
+  (->* () (#:start Index? #:stop MaybeStop? #:step Step?) Slice?)
+  (mk-Slice start stop #:step step))
+
+(define/contract (hw9-slice a slices)
+  (-> Array? (listof Slice?) Array?)
+  (apply slice a slices))
+
+(define/contract (slice a . slices)
+  (->* (Array?) () #:rest (listof Slice?) Array?)
+  (cond
+    [(empty? slices) a]
+    [else
+     (define slice-res
+       (slice1 a (first slices)))
+     (if (<= (ndim slice-res) 1)
+         (apply slice slice-res (rest slices))
+         (map
+          (lambda (aa)
+            (apply slice aa (rest slices)))
+          slice-res))]))
+
+(define/contract (slice1 a s)
+  (-> Array? Slice? Array?)
+  (match s
+    [(? number? s) (ref/flat a s)]
+    [(SliceRange i j step)
+     (if j
+         (get-slice a i j #:step step)
+         (get-slice a i (length a) #:step step))]))
 
 ;; get-slice : arraylist
 (define/contract (get-slice a i [j (length a)] #:step [step 1])
