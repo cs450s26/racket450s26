@@ -210,14 +210,19 @@
             (apply slice aa (rest slices)))
           slice-res))]))
 
+;; sets Stop index to len if #f or > len
+(define/contract (adjust-stop j len)
+  (-> MaybeStop? exact-nonnegative-integer? Index?)
+  (cond
+    [(false? j) len]
+    [else (if (> j len) len j)]))
+
 (define/contract (slice1 a s)
   (-> Array? Slice? Array?)
   (match s
     [(? number? s) (ref/flat a s)]
     [(SliceRange i j step)
-     (if j
-         (get-slice a i j #:step step)
-         (get-slice a i (length a) #:step step))]))
+     (get-slice a i (adjust-stop j (length a)) #:step step)]))
 
 ;; get-slice : arraylist
 (define/contract (get-slice a i [j (length a)] #:step [step 1])
@@ -245,3 +250,20 @@
            (filter-step/a (rest lst) (sub1 curr-step) step))]))
 
   (filter-step/a lst 1 step))
+
+(module+ test
+  (require rackunit)
+  ;; check auto array stop truncate
+  (check-equal?
+   (hw9-slice '[[1 2 3 4] [5 6 7 8]]
+              (list
+               (mk-Slice/testing #:start 0 #:stop 3)))
+   '[[1 2 3 4]
+     [5 6 7 8]])
+  
+  ;; check auto array stop truncate
+  (check-equal?
+   (hw9-slice '[[1 2 3 4] [5 6 7 8]]
+              (list
+               (mk-Slice/testing #:start 0 #:stop 3 #:step 2)))
+   '[[1 2 3 4]]))
