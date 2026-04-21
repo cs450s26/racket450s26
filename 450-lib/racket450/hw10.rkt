@@ -19,7 +19,7 @@
           [Array? hw10-Array?]
           [mk-Slice/testing hw10-mk-Slice]
           [Slice? hw10-Slice?]
-          [mk-array+ hw10-mk-array-op]))
+          [mk-array-op hw10-mk-array-op]))
 
 ;; An Atom is one of:
 ;; - Number
@@ -122,74 +122,76 @@
 
 (struct exn:fail:cs450:broadcast exn:fail [])
 
-;; broadcast possible if shapes have equal length or one has dimension 1
-(define/contract (can-broadcast? s1 s2)
-  (-> (non-empty-listof Dim?) (non-empty-listof Dim?) boolean?)
-  (or (= (first s1) (first s2))
-      (= (first s1) 1)
-      (= (first s2) 1)))
-
-;; stretches Array a01 onto a02 for arithmetic operation,
-;; according to NumPy algorithm
-;; https://numpy.org/doc/stable/user/basics.broadcasting.html
-(define/contract (broadcast a01 a02)
-  (-> Array? Array? Array?)
-  ;; Accumulator s1 : shape of a01 reversed
-  ;; invariant: remaining dimensions must have counterpart in a2
-  ;; Accumulator s2 : shape of a02 reversed
-  ;; invariant: remaining dimensions must have counterpart in a1
-  (define/contract (broadcast/a a1 a2 s1 s2)
-    (-> Array? Array? (listof Dim?) (listof Dim?) Array?)
-    (cond
-      [(and (empty? s1) (empty? s2)) a1]
-      [(and (empty? s1) (not (empty? s2)))
-       (broadcast/a (list a1) a2 s1 (rest s2))]
-      [(and (not (empty? s1)) (empty? s2))
-       (broadcast/a a1 (list a2) (rest s1) s2)]
-      [else
-       (if (can-broadcast? s1 s2)
-           (broadcast/a a1 a2 (rest s1) (rest s2))
-           (raise
-            (exn:fail:cs450:broadcast
-             (format
-              "ValueError: operands could not be broadcast together with shapes ~a ~a"
-              (shape a01) (shape a02))
-             (current-continuation-marks))))]))
-
-  (broadcast/a a01 a02 (reverse (shape a01)) (reverse (shape a02))))
-
-;; creates a mk-array+ fn, given a "+" function for array elements
-(define/contract ((mk-array+ array-elt+) a1 a2)
+;; mk-array-op
+;; Creates a mk-array-op fn, given a function for Array elements
+(define/contract ((mk-array-op array-elt-op) a1 a2)
   (-> (-> Atom? Atom? Atom?) (-> Array? Array? Array?))
-  (cond
-    [(and (Atom? a1) (Atom? a2)) (array-elt+ a1 a2)]
-    [else (arraylist+ (broadcast a1 a2)
-                      (broadcast a2 a1)
-                      #:array-elt+ array-elt+)]))
+  ((curry array-op array-elt-op) a1 a2))
 
-(define/contract (array+/nobroadcast a1 a2 #:array-elt+ [array-elt+ +])
-  (->* (Array? Array?) (#:array-elt+ (-> Atom? Atom? Atom?)) Array?)
-  (cond
-    [(and (Atom? a1) (Atom? a2)) (array-elt+ a1 a2)]
-    [else (arraylist+ a1 a2 #:array-elt+ array-elt+)]))
+;; array-op
+;; Applies the given Array element function to the two given Arrays if they are broadcastable
+(define/contract (array-op array-elt-op l-arr r-arr)
+  (-> (-> Atom? Atom? Atom?) Array? Array? Array?)
+  (array-op/compatible array-elt-op (broadcast l-arr r-arr) (broadcast r-arr l-arr)))
 
-;; outputs "rest" of a1, unless it has 1 dim and a2 doesnt
-;; (compatibility comes from NumPy + algorithm)
-(define/contract (rest-unless-len1compat a1 a2)
-  (-> ArrayList? ArrayList? ArrayList?)
-  (if (and (= 1 (length a1)) (not (= 1 (length a2))))
-      a1
-      (rest a1)))
+;; array-op/compatible
+;; Applies the given Array element function to the two given Arrays
+;; Invariant: Arrays are of compatible shape
+(define/contract (array-op/compatible array-elt-op l-arr r-arr)
+  (-> (-> Atom? Atom? Atom?) Array? Array? Array?)
+  (match* (l-arr r-arr)
+    [((? Atom? l) (? Atom? r)) (array-elt-op l r)]
+    [((? Atom? l) (? ArrayList? r)) (arraylist-op/atom array-elt-op r l)]
+    [((? ArrayList? l) (? Atom? r)) (arraylist-op/atom array-elt-op l r)]
+    [((? ArrayList? l) (? ArrayList? r)) (arraylist-op array-elt-op l r)]))
 
-(define/contract (arraylist+ a1 a2  #:array-elt+ [array-elt+ +])
-  (->* (ArrayList? ArrayList?) (#:array-elt+ (-> Atom? Atom? Atom?)) ArrayList?)
+;; arraylist-op/atom
+;; Applies the given Array element operation to the given Atom and ArrayList
+(define/contract (arraylist-op/atom array-elt-op al atom)
+  (-> (-> Atom? Atom? Atom?) ArrayList? Atom? ArrayList?)
+  (map (curry array-op/compatible array-elt-op atom) al))
+
+;; arraylist-op
+;; Applies the given Array element operation to the two given ArrayLists
+;; Invariant: ArrayLists are of compatible shape
+(define/contract (arraylist-op array-elt-op l-al r-al)
+  (-> (-> Atom? Atom? Atom?) ArrayList? ArrayList? ArrayList?)
   (cond
-    [(and (empty? a1) (empty? a2)) empty]
+    [(and (empty? l-al) (empty? r-al)) empty]
     [else
-     (cons (array+/nobroadcast (first a1) (first a2) #:array-elt+ array-elt+)
-           (arraylist+ (rest-unless-len1compat a1 a2)
-                       (rest-unless-len1compat a2 a1)
-                        #:array-elt+ array-elt+))]))
+     (match* ((length l-al) (length r-al))
+       [(e e) (map (curry array-op/compatible array-elt-op) l-al r-al)]
+       [(1 _) (map (curry array-op/compatible array-elt-op (first l-al)) r-al)]
+       [(_ 1) (map (curry array-op/compatible array-elt-op (first r-al)) l-al)])]))
+
+;; broadcast
+;; Broadcasts from-arr to a shape compatible with to-arr
+(define/contract (broadcast from-arr to-arr)
+  (-> Array? Array? Array?)
+  ;; broadcast/a
+  ;; from: the reverse shape of the from-arr so far
+  ;; to: the reverse shape of the to-arr so far
+  (define/contract (broadcast/a b-arr from to)
+    (-> Array? (listof exact-nonnegative-integer?) (listof exact-nonnegative-integer?) Array?)
+    (cond
+      [(and (empty? from) (empty? to)) b-arr]
+      [(and (cons? from) (empty? to)) b-arr]
+      [(and (empty? from) (cons? to)) (broadcast/a (list b-arr) empty (rest to))]
+      [else
+       (if (valid-broadcast? (first from) (first to))
+           (broadcast/a b-arr (rest from) (rest to))
+           (raise (exn:fail:cs450:broadcast
+                   (format "ValueError: operands could not be broadcast together with shapes ~a ~a"
+                           (shape from-arr)
+                           (shape to-arr))
+                   (current-continuation-marks))))]))
+  (broadcast/a from-arr (reverse (shape from-arr)) (reverse (shape to-arr))))
+
+;; valid-broadcast?
+;; Determines whether the two given ArrayList lengths are broadcastable
+(define/contract (valid-broadcast? l-len r-len)
+  (-> exact-nonnegative-integer? exact-nonnegative-integer? boolean?)
+  (or (equal? l-len 1) (equal? r-len 1) (equal? l-len r-len)))
 
 (define/contract (ref/flat a . indices)
   (->* (Array?) () #:rest (listof Index?) Array?)
