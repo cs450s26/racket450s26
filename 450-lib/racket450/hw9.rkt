@@ -143,7 +143,7 @@
 (define/contract (arraylist+ a1 a2  #:array-elt+ [array-elt+ +])
   (->* (ArrayList? ArrayList?) (#:array-elt+ (-> Atom? Atom? Atom?)) ArrayList?)
   (cond
-    [(and (empty? a1) (empty? a2)) empty]
+    [(or (empty? a1) (empty? a2)) empty]
     [else
      (cons (array+/nobroadcast (first a1) (first a2) #:array-elt+ array-elt+)
            (arraylist+ (rest-unless-len1compat a1 a2)

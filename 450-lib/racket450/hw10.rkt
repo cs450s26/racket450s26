@@ -184,7 +184,7 @@
 (define/contract (arraylist+ a1 a2  #:array-elt+ [array-elt+ +])
   (->* (ArrayList? ArrayList?) (#:array-elt+ (-> Atom? Atom? Atom?)) ArrayList?)
   (cond
-    [(and (empty? a1) (empty? a2)) empty]
+    [(or (empty? a1) (empty? a2)) empty]
     [else
      (cons (array+/nobroadcast (first a1) (first a2) #:array-elt+ array-elt+)
            (arraylist+ (rest-unless-len1compat a1 a2)
@@ -307,4 +307,19 @@
    (hw10-slice '[[1 2 3 4] [5 6 7 8]]
               (list
                (mk-Slice/testing #:start 0 #:stop 3 #:step 2)))
-   '[[1 2 3 4]]))
+   '[[1 2 3 4]])
+
+  ;; pr #2 - empty array bug
+  (check-equal?
+   ((mk-array+ +) '[1] '[])
+   '[])
+  (check-equal?
+   ((mk-array+ +) '[] '[1])
+   '[])
+  (check-equal?
+   ((mk-array+ +) '[[1] [2]] '[])
+   '[[] []])
+  (check-equal?
+   ((mk-array+ +) '[] '[[1] [2]])
+   '[[] []])
+  )
