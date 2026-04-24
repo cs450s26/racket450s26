@@ -22,7 +22,8 @@
 ;          match-define
 ;          match-let
 ;          let*
-          letrec)
+;          letrec
+          )
          local
          check-expect
          define-struct
