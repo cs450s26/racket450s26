@@ -5,6 +5,8 @@
           [mk-Slice/testing hw9-mk-Slice]
           [Slice? hw9-Slice?]
           [mk-array+ hw9-mk-array+]
+          [exn:fail:cs450:broadcast
+           hw9-exn:fail:cs450:broadcast]
           [exn:fail:cs450:broadcast?
            hw9-exn:fail:cs450:broadcast?]))
 
