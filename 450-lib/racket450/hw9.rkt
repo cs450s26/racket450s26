@@ -202,15 +202,7 @@
   (->* (Array?) () #:rest (listof Slice?) Array?)
   (cond
     [(empty? slices) a]
-    [else
-     (define slice-res
-       (slice1 a (first slices)))
-     (if (<= (ndim slice-res) 1)
-         (apply slice slice-res (rest slices))
-         (map
-          (lambda (aa)
-            (apply slice aa (rest slices)))
-          slice-res))]))
+    [else (slice1 a (first slices) (rest slices))]))
 
 ;; sets Stop index to len if #f or > len
 (define/contract (adjust-stop j len)
@@ -219,12 +211,15 @@
     [(false? j) len]
     [else (if (> j len) len j)]))
 
-(define/contract (slice1 a s)
-  (-> Array? Slice? Array?)
+;; do 1 slice
+(define/contract (slice1 a s rst)
+  (-> Array? Slice? (listof Slice?) Array?)
   (match s
-    [(? number? s) (ref/flat a s)]
+    [(? number? s) (apply slice (ref/flat a s) rst)]
     [(SliceRange i j step)
-     (get-slice a i (adjust-stop j (length a)) #:step step)]))
+     (map
+      (lambda (aa) (apply slice aa rst))
+      (get-slice a i (adjust-stop j (length a)) #:step step))]))
 
 ;; get-slice : arraylist
 (define/contract (get-slice a i [j (length a)] #:step [step 1])
